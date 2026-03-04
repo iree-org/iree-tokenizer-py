@@ -33,10 +33,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Default manylinux images (same as IREE).
 MANYLINUX_IMAGES = {
-    "x86_64": (
-        "ghcr.io/iree-org/manylinux_x86_64"
-        "@sha256:2e0246137819cf10ed84240a971f9dd75cc3eb62dc6907dfd2080ee966b3c9f4"
-    ),
+    "x86_64": "quay.io/pypa/manylinux_2_28_x86_64",
     "aarch64": "quay.io/pypa/manylinux_2_28_aarch64",
 }
 
@@ -45,6 +42,7 @@ DEFAULT_PYTHON_VERSIONS = [
     "cp311-cp311",
     "cp312-cp312",
     "cp313-cp313",
+    "cp314-cp314",
 ]
 
 
@@ -88,14 +86,17 @@ def run_on_host(args: argparse.Namespace):
     if args.no_repair:
         inner_cmd.append("--no-repair")
 
+    # Use :Z volume label for SELinux relabeling (needed on Fedora/RHEL
+    # with rootless podman). Harmless on non-SELinux systems.
+    vol_suffix = ":Z" if args.docker == "podman" else ""
     container_cmd = [
         args.docker,
         "run",
         "--rm",
         "-v",
-        f"{REPO_ROOT}:{REPO_ROOT}",
+        f"{REPO_ROOT}:{REPO_ROOT}{vol_suffix}",
         "-v",
-        f"{output_dir}:{output_dir}",
+        f"{output_dir}:{output_dir}{vol_suffix}",
         "-w",
         str(REPO_ROOT),
         image,
@@ -131,6 +132,22 @@ def clone_iree(tag: str, dest: Path):
             f"iree-{tag}",
             "https://github.com/iree-org/iree.git",
             str(dest),
+        ]
+    )
+    # Init required submodules (flatcc for the tokenizer JSON parser,
+    # benchmark because IREE's CMakeLists.txt unconditionally adds it).
+    run(
+        [
+            "git",
+            "-C",
+            str(dest),
+            "submodule",
+            "update",
+            "--init",
+            "--depth",
+            "1",
+            "third_party/flatcc",
+            "third_party/benchmark",
         ]
     )
 
