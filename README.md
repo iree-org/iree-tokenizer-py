@@ -11,6 +11,8 @@ compatibility.
   tokenization — feed chunks in, get tokens out. Ideal for LLM inference.
 - **Drop-in compatible.** Loads any HuggingFace `tokenizer.json`. Supports
   BPE, WordPiece, and Unigram models.
+- **GPU-ready.** Designed to be compatible with executing tiled on the GPU,
+  not just the host.
 
 ## Performance
 
@@ -35,6 +37,10 @@ than tiktoken and 20x faster than HuggingFace.
 
 Encoding 100 paragraphs in a single batch call using shared internal state.
 IREE sustains 10M tokens/sec with linear scaling across batch sizes.
+
+Measured on an AMD Threadripper 3970X (32C/64T), 128 GB DDR4, Fedora 43,
+GCC 15.2, Python 3.14. Single-threaded, p50 latency over 50 iterations.
+GPT-2 tokenizer (`openai-community/gpt2`).
 
 Run benchmarks yourself:
 ```
