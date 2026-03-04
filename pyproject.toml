@@ -34,7 +34,7 @@ wheel.packages = ["src/iree"]
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"
 input = "version.json"
-regex = '"package-version":\\s*"(?P<value>[^"]+)"'
+regex = '"package-version":\s*"(?P<value>[^"]+)"'
 
 [tool.scikit-build.cmake.define]
 IREE_SOURCE_DIR = {env = "IREE_SOURCE_DIR", default = ""}
