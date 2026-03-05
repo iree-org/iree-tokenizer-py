@@ -13,7 +13,7 @@ compatibility.
 - **Drop-in compatible.** Loads any HuggingFace `tokenizer.json`. Supports
   BPE, WordPiece, and Unigram models.
 
-Based on the IREE high-speed tokenizer library:
+Based on the [IREE high-speed tokenizer library](https://github.com/iree-org/iree/blob/main/runtime/src/iree/tokenizer/README.md):
 
 - **Optimized for cache utilization.** Efficiently utilizes cache on both large and small CPUs. No dependencies and small footprint make it ideal for embedded/client and inclusion into other projects.
 - **Unique Algorithmic optimizations.** Pull-based streaming processor with bounded/small, deterministic memory usage. Various novel optimizations not seen elsewhere.
