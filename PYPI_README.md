@@ -16,44 +16,26 @@ compatibility.
 
 ## Performance
 
-### Encode
+GPT-2 tokenizer, single-threaded, p50 latency over 50 iterations.
 
-![Encode benchmark](docs/img/bench_encode.png)
-
-Single-string encode of 22K characters into 5000 tokens. IREE completes in
-438 µs — 2.8x faster than tiktoken's Rust backend and 12x faster than
-HuggingFace tokenizers.
-
-### Decode
-
-![Decode benchmark](docs/img/bench_decode.png)
-
-Decoding 5000 tokens back to text. IREE finishes in 28 µs — 2.7x faster
-than tiktoken and 20x faster than HuggingFace.
-
-### Batch Encode Throughput
-
-![Batch benchmark](docs/img/bench_batch.png)
-
-Encoding 100 paragraphs in a single batch call using shared internal state.
-IREE sustains 10M tokens/sec with linear scaling across batch sizes.
-
-Measured on an AMD Threadripper 3970X (32C/64T), 128 GB DDR4, Fedora 43,
-GCC 15.2, Python 3.14. Single-threaded, p50 latency over 50 iterations.
-GPT-2 tokenizer (`openai-community/gpt2`).
-
-Run benchmarks yourself:
 ```
-pip install tokenizers tiktoken rich huggingface-hub
-python benchmarks/bench_comparison.py
+Encode (22K chars → 5000 tokens)
+  iree       469 µs    10.6M tok/s
+  tiktoken  1251 µs     4.0M tok/s   2.7x slower
+  hf        5420 µs     0.9M tok/s  11.6x slower
+
+Decode (5000 tokens → text)
+  iree        72 µs
+  tiktoken    78 µs                   1.1x slower
+  hf         599 µs                   8.3x slower
+
+Batch Encode (100 × 880 chars)
+  iree      1942 µs    10.3M tok/s
+  tiktoken  5148 µs     3.8M tok/s   2.7x slower
+  hf       22022 µs     0.9M tok/s  11.3x slower
 ```
 
-## Install
-
-```bash
-git clone https://github.com/iree-org/iree.git /path/to/iree
-IREE_SOURCE_DIR=/path/to/iree pip install .
-```
+Measured on AMD Threadripper 3970X, 128 GB DDR4, Fedora 43, GCC 15.2, Python 3.14.
 
 ## Quick Start
 
@@ -101,32 +83,6 @@ for chunk in decode_stream_iter(tok, token_generator):
 | `tok.model_type` | `str` | `"BPE"`, `"WordPiece"`, or `"Unigram"` |
 | `tok.token_to_id(token)` | `int \| None` | Look up token ID |
 | `tok.id_to_token(id)` | `str \| None` | Look up token text |
-
-## Development
-
-```bash
-# Build
-cmake -B build -G Ninja -DIREE_SOURCE_DIR=/path/to/iree
-cmake --build build
-
-# Test
-ln -s build/_iree_tokenizer*.so src/iree/tokenizer/
-PYTHONPATH=src pytest tests/ -v
-
-# ASAN (requires Clang)
-cmake -B build-asan -G Ninja \
-  -DIREE_SOURCE_DIR=/path/to/iree \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
-  -DIREE_TOKENIZER_ENABLE_ASAN=ON
-cmake --build build-asan
-ln -sf build-asan/_iree_tokenizer*.so src/iree/tokenizer/
-LD_PRELOAD=$(clang++ -print-file-name=libclang_rt.asan.so) \
-  ASAN_OPTIONS=detect_leaks=0 PYTHONPATH=src pytest tests/ -v
-
-# Optimized local build (-march=native)
-IREE_TOKENIZER_NATIVE_ARCH=ON pip install .
-```
 
 ## License
 
