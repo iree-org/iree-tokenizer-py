@@ -169,11 +169,12 @@ nanobind_add_module(_iree_tokenizer
   src/bindings/encoding.cc
 )
 
-# nanobind requires RTTI and exceptions.
+# nanobind requires RTTI and exceptions. Enable warnings for our bindings.
 if(MSVC)
-  target_compile_options(_iree_tokenizer PRIVATE /EHsc /GR)
+  target_compile_options(_iree_tokenizer PRIVATE /EHsc /GR /W4)
 else()
-  target_compile_options(_iree_tokenizer PRIVATE -frtti -fexceptions)
+  target_compile_options(_iree_tokenizer PRIVATE
+    -frtti -fexceptions -Wall -Wextra -Wshadow)
 endif()
 
 # Link IREE tokenizer targets.

@@ -17,6 +17,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   pre-commit:
     runs-on: ubuntu-24.04
@@ -44,6 +47,9 @@ jobs:
       - name: Clone IREE
         run: |
           IREE_VERSION=$(python3 -c "import json; print(json.load(open('version.json'))['iree-version'])")
+          if ! echo "$IREE_VERSION" | grep -qE '^[a-zA-Z0-9._-]+$'; then
+            echo "Invalid IREE version: $IREE_VERSION" >&2; exit 1
+          fi
           git clone --depth 1 --branch "iree-${IREE_VERSION}" \
             https://github.com/iree-org/iree.git /tmp/iree || \
           git clone --depth 1 https://github.com/iree-org/iree.git /tmp/iree
@@ -87,6 +93,9 @@ jobs:
       - name: Clone IREE
         run: |
           IREE_VERSION=$(python3 -c "import json; print(json.load(open('version.json'))['iree-version'])")
+          if ! echo "$IREE_VERSION" | grep -qE '^[a-zA-Z0-9._-]+$'; then
+            echo "Invalid IREE version: $IREE_VERSION" >&2; exit 1
+          fi
           git clone --depth 1 --branch "iree-${IREE_VERSION}" \
             https://github.com/iree-org/iree.git /tmp/iree || \
           git clone --depth 1 https://github.com/iree-org/iree.git /tmp/iree

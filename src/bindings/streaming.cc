@@ -19,23 +19,27 @@ namespace nb = nanobind;
 void RegisterStreaming(nb::module_& m) {
   nb::class_<EncodeStream>(m, "EncodeStream",
                            "Streaming encoder for incremental tokenization.")
-      .def("feed", &EncodeStream::Feed, nb::arg("text"),
+      .def("feed", &EncodeStream::Feed, nb::arg("text"), nb::lock_self(),
            "Feed a text chunk. Returns token IDs produced so far.")
-      .def("finalize", &EncodeStream::Finalize,
+      .def("finalize", &EncodeStream::Finalize, nb::lock_self(),
            "Flush remaining tokens. Must be called after all input is fed.")
-      .def("close", &EncodeStream::Close, "Release resources.")
+      .def("close", &EncodeStream::Close, nb::lock_self(), "Release resources.")
       .def_prop_ro("is_open", &EncodeStream::is_open)
       .def("__enter__", [](nb::object self) -> nb::object { return self; })
-      .def("__exit__", [](EncodeStream& s, nb::args) { s.Close(); });
+      .def(
+          "__exit__", [](EncodeStream& s, nb::args) { s.Close(); },
+          nb::lock_self());
 
   nb::class_<DecodeStream>(m, "DecodeStream",
                            "Streaming decoder for incremental detokenization.")
-      .def("feed", &DecodeStream::Feed, nb::arg("tokens"),
+      .def("feed", &DecodeStream::Feed, nb::arg("tokens"), nb::lock_self(),
            "Feed token IDs. Returns text produced so far.")
-      .def("finalize", &DecodeStream::Finalize,
+      .def("finalize", &DecodeStream::Finalize, nb::lock_self(),
            "Flush remaining text. Must be called after all tokens are fed.")
-      .def("close", &DecodeStream::Close, "Release resources.")
+      .def("close", &DecodeStream::Close, nb::lock_self(), "Release resources.")
       .def_prop_ro("is_open", &DecodeStream::is_open)
       .def("__enter__", [](nb::object self) -> nb::object { return self; })
-      .def("__exit__", [](DecodeStream& s, nb::args) { s.Close(); });
+      .def(
+          "__exit__", [](DecodeStream& s, nb::args) { s.Close(); },
+          nb::lock_self());
 }
