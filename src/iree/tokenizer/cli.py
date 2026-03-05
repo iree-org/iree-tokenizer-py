@@ -13,6 +13,11 @@ Usage:
     echo "Hello world" | iree-tokenize encode -t tokenizer.json
     cat corpus.txt | iree-tokenize encode -t tok.json | iree-tokenize decode -t tok.json
     iree-tokenize info -t tokenizer.json
+
+Note that this tool illustrates streaming processing but the overhead of JSON
+processing is expensive and skews throughput. Treat this as an example of how
+to operate the streaming API vs a benchmarking tool or a tool expected to
+achieve maximum throughput.
 """
 
 import argparse
@@ -120,7 +125,7 @@ class ProgressTracker:
         self.total_bytes += n_bytes
         if self.enabled and self.is_tty:
             now = time.perf_counter()
-            if now - self._last_display >= 0.1:
+            if now - self._last_display >= 1.0:
                 self._display_live()
                 self._last_display = now
 
