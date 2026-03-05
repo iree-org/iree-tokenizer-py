@@ -58,6 +58,7 @@ jobs:
         run: pip wheel --no-deps -v -w wheelhouse --config-settings=build-dir=C:/b .
         env:
           IREE_SOURCE_DIR: C:\iree
+          CMAKE_GENERATOR: Ninja
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -114,9 +115,9 @@ jobs:
         run: |
           # Try version-specific wheel first (cp310, cp311), then abi3.
           PYVER="cp$(echo ${{ matrix.python-version }} | tr -d '.')"
-          WHEEL=$(ls wheelhouse/iree_tokenizer-*-${PYVER}-${PYVER}-*.whl 2>/dev/null | head -1)
+          WHEEL=$(ls wheelhouse/iree_tokenizer-*-${PYVER}-${PYVER}-*.whl 2>/dev/null | head -1 || true)
           if [ -z "$WHEEL" ]; then
-            WHEEL=$(ls wheelhouse/iree_tokenizer-*-*-abi3-*.whl 2>/dev/null | head -1)
+            WHEEL=$(ls wheelhouse/iree_tokenizer-*-*-abi3-*.whl 2>/dev/null | head -1 || true)
           fi
           if [ -z "$WHEEL" ]; then
             echo "No wheel found for ${PYVER}, listing available:"
