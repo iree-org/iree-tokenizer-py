@@ -18,7 +18,7 @@ compatibility.
 
 ### Encode
 
-![Encode benchmark](https://raw.githubusercontent.com/iree-org/iree-tokenizer/main/docs/img/bench_encode.png)
+![Encode benchmark](https://raw.githubusercontent.com/stellaraccident/py-tokenizer/refs/heads/main/docs/img/bench_encode.png)
 
 Single-string encode of 22K characters into 5000 tokens. IREE completes in
 438 µs — 2.8x faster than tiktoken's Rust backend and 12x faster than
@@ -26,14 +26,14 @@ HuggingFace tokenizers.
 
 ### Decode
 
-![Decode benchmark](https://raw.githubusercontent.com/iree-org/iree-tokenizer/main/docs/img/bench_decode.png)
+![Decode benchmark](https://raw.githubusercontent.com/stellaraccident/py-tokenizer/refs/heads/main/docs/img/bench_decode.png)
 
 Decoding 5000 tokens back to text. IREE finishes in 28 µs — 2.7x faster
 than tiktoken and 20x faster than HuggingFace.
 
 ### Batch Encode Throughput
 
-![Batch benchmark](https://raw.githubusercontent.com/iree-org/iree-tokenizer/main/docs/img/bench_batch.png)
+![Batch benchmark](https://raw.githubusercontent.com/stellaraccident/py-tokenizer/refs/heads/main/docs/img/bench_batch.png)
 
 Encoding 100 paragraphs in a single batch call using shared internal state.
 IREE sustains 10M tokens/sec with linear scaling across batch sizes.
