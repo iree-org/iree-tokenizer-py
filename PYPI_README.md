@@ -90,6 +90,31 @@ for chunk in decode_stream_iter(tok, token_generator):
 | `tok.token_to_id(token)` | `int \| None` | Look up token ID |
 | `tok.id_to_token(id)` | `str \| None` | Look up token text |
 
+## CLI
+
+A streaming `iree-tokenize` command is included. It reads from stdin, writes
+JSONL to stdout, and shows live throughput on stderr.
+
+```bash
+# Encode text to token IDs
+echo "Hello world" | iree-tokenize encode -t tokenizer.json
+# {"seq":0,"text":"Hello world","ids":[15496,995],"n_tokens":2,...}
+
+# Decode token IDs back to text
+echo '[15496, 995]' | iree-tokenize decode -t tokenizer.json
+# {"seq":0,"ids":[15496,995],"text":"Hello world","n_tokens":2,...}
+
+# Chain encode → decode (round-trip)
+cat corpus.txt | iree-tokenize encode -t tokenizer.json | iree-tokenize decode -t tokenizer.json
+
+# Tokenizer info
+iree-tokenize info -t tokenizer.json
+```
+
+Output is chainable: encode output feeds directly into decode and vice versa.
+Use `--compact` to omit timing fields, `--rich` for byte offsets, or
+`--no-progress` to suppress the stderr throughput display.
+
 ## License
 
 Apache 2.0 with LLVM Exceptions — see [LICENSE](LICENSE).
