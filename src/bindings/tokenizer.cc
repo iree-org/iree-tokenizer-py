@@ -86,10 +86,11 @@ class TokenizerWrapper {
       const std::string& text, bool add_special_tokens) {
     auto ids = Encode(text, add_special_tokens);
     size_t n = ids.size();
-    int32_t* data = new int32_t[n];
-    std::memcpy(data, ids.data(), n * sizeof(int32_t));
-    nb::capsule owner(data, [](void* p) noexcept { delete[] (int32_t*)p; });
-    return nb::ndarray<nb::numpy, int32_t, nb::ndim<1>>(data, {n},
+    auto data = std::make_unique<int32_t[]>(n);
+    std::memcpy(data.get(), ids.data(), n * sizeof(int32_t));
+    int32_t* raw = data.release();
+    nb::capsule owner(raw, [](void* p) noexcept { delete[] (int32_t*)p; });
+    return nb::ndarray<nb::numpy, int32_t, nb::ndim<1>>(raw, {n},
                                                         std::move(owner));
   }
 
@@ -216,16 +217,18 @@ class TokenizerWrapper {
     size_t total = 0;
     for (const auto& ids : batched) total += ids.size();
 
-    int32_t* flat_data = new int32_t[total];
-    int64_t* len_data = new int64_t[batched.size()];
+    auto flat_ptr = std::make_unique<int32_t[]>(total);
+    auto len_ptr = std::make_unique<int64_t[]>(batched.size());
     size_t offset = 0;
     for (size_t i = 0; i < batched.size(); ++i) {
-      std::memcpy(flat_data + offset, batched[i].data(),
+      std::memcpy(flat_ptr.get() + offset, batched[i].data(),
                   batched[i].size() * sizeof(int32_t));
-      len_data[i] = static_cast<int64_t>(batched[i].size());
+      len_ptr[i] = static_cast<int64_t>(batched[i].size());
       offset += batched[i].size();
     }
 
+    int32_t* flat_data = flat_ptr.release();
+    int64_t* len_data = len_ptr.release();
     nb::capsule flat_owner(flat_data,
                            [](void* p) noexcept { delete[] (int32_t*)p; });
     nb::capsule len_owner(len_data,
@@ -349,8 +352,9 @@ class TokenizerWrapper {
     size_t n = token_count;
 
     // IDs array.
-    int32_t* ids_data = new int32_t[n];
-    std::memcpy(ids_data, token_ids.data(), n * sizeof(int32_t));
+    auto ids_ptr = std::make_unique<int32_t[]>(n);
+    std::memcpy(ids_ptr.get(), token_ids.data(), n * sizeof(int32_t));
+    int32_t* ids_data = ids_ptr.release();
     nb::capsule ids_owner(ids_data,
                           [](void* p) noexcept { delete[] (int32_t*)p; });
     auto ids_arr = nb::ndarray<nb::numpy, int32_t, nb::ndim<1>>(
@@ -359,11 +363,12 @@ class TokenizerWrapper {
     // Offsets array — (n, 2) of uint64.
     nb::object offsets_arr;
     if (track_offsets) {
-      uint64_t* off_data = new uint64_t[n * 2];
+      auto off_ptr = std::make_unique<uint64_t[]>(n * 2);
       for (size_t i = 0; i < n; ++i) {
-        off_data[i * 2] = offsets[i].start;
-        off_data[i * 2 + 1] = offsets[i].end;
+        off_ptr[i * 2] = offsets[i].start;
+        off_ptr[i * 2 + 1] = offsets[i].end;
       }
+      uint64_t* off_data = off_ptr.release();
       nb::capsule off_owner(off_data,
                             [](void* p) noexcept { delete[] (uint64_t*)p; });
       offsets_arr = nb::cast(nb::ndarray<nb::numpy, uint64_t, nb::ndim<2>>(
@@ -373,8 +378,9 @@ class TokenizerWrapper {
     }
 
     // Type IDs array.
-    uint8_t* tid_data = new uint8_t[n];
-    std::memcpy(tid_data, type_ids.data(), n);
+    auto tid_ptr = std::make_unique<uint8_t[]>(n);
+    std::memcpy(tid_ptr.get(), type_ids.data(), n);
+    uint8_t* tid_data = tid_ptr.release();
     nb::capsule tid_owner(tid_data,
                           [](void* p) noexcept { delete[] (uint8_t*)p; });
     auto tid_arr = nb::ndarray<nb::numpy, uint8_t, nb::ndim<1>>(
@@ -486,6 +492,11 @@ void RegisterTokenizer(nb::module_& m) {
               throw nb::value_error(("Cannot open file: " + path).c_str());
             fseek(f, 0, SEEK_END);
             long size = ftell(f);
+            if (size < 0) {
+              fclose(f);
+              throw nb::value_error(
+                  "Cannot determine file size (not a regular file?)");
+            }
             fseek(f, 0, SEEK_SET);
             std::string json(size, '\0');
             size_t read = fread(json.data(), 1, size, f);

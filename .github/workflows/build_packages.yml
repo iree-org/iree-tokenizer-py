@@ -17,6 +17,9 @@ concurrency:
   group: build-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build_linux_x86_64:
     runs-on: ubuntu-24.04
@@ -53,6 +56,9 @@ jobs:
       - name: Clone IREE
         run: |
           $IREE_VERSION = python -c "import json; print(json.load(open('version.json'))['iree-version'])"
+          if ($IREE_VERSION -notmatch '^[a-zA-Z0-9._-]+$') {
+            Write-Error "Invalid IREE version: $IREE_VERSION"; exit 1
+          }
           git clone --depth 1 --branch "iree-$IREE_VERSION" https://github.com/iree-org/iree.git C:\iree
           git -C C:\iree submodule update --init --depth 1 third_party/flatcc third_party/benchmark
 
