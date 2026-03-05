@@ -28,6 +28,9 @@ classifiers = [
 test = ["pytest>=7", "tokenizers", "tiktoken"]
 bench = ["tokenizers", "tiktoken", "rich"]
 
+[project.scripts]
+iree-tokenize = "iree.tokenizer.cli:main"
+
 [tool.scikit-build]
 cmake.build-type = "Release"
 wheel.packages = ["src/iree"]
