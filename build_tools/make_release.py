@@ -107,7 +107,7 @@ def main():
     data["package-version"] = args.version
     write_version_json(data, args.dry_run)
     run(["git", "add", "version.json"], args.dry_run)
-    run(["git", "commit", "-m", f"Release {tag}"], args.dry_run)
+    run(["git", "commit", "--signoff", "-m", f"Release {tag}"], args.dry_run)
 
     # Step 2: Create tag.
     print(f"\n=== Creating tag {tag} ===")
@@ -120,7 +120,7 @@ def main():
         data["package-version"] = dev
         write_version_json(data, args.dry_run)
         run(["git", "add", "version.json"], args.dry_run)
-        run(["git", "commit", "-m", f"Bump to {dev}"], args.dry_run)
+        run(["git", "commit", "--signoff", "-m", f"Bump to {dev}"], args.dry_run)
 
     # Done.
     print(f"\n{'='*60}")
